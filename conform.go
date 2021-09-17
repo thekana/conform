@@ -29,8 +29,6 @@ var patterns = map[string]*regexp.Regexp{
 	"name":       regexp.MustCompile("[\\p{L}]([\\p{L}|[:space:]|\\-|\\']*[\\p{L}])*"),
 }
 
-var truncateRegex = regexp.MustCompile(`^truncate=([0-9]+)$`)
-
 // a valid email will only have one "@", but let's treat the last "@" as the domain part separator
 func emailLocalPart(s string) string {
 	i := strings.LastIndex(s, "@")
@@ -300,7 +298,8 @@ func transformString(input, tags string) string {
 		return input
 	}
 	for _, split := range strings.Split(tags, ",") {
-		switch split {
+		args := strings.Split(split, "=")
+		switch args[0] {
 		case "trim":
 			input = strings.TrimSpace(input)
 		case "ltrim":
@@ -337,14 +336,13 @@ func transformString(input, tags string) string {
 			input = template.HTMLEscapeString(input)
 		case "!js":
 			input = template.JSEscapeString(input)
-		default:
-			if truncateParam := truncateRegex.FindString(split); truncateParam != "" {
-				l, err := strconv.ParseInt(strings.TrimLeft(truncateParam, "truncate="), 10, 32)
-				if err == nil && utf8.RuneCountInString(input) >= int(l) {
-					r := []rune(input)
-					return string(r[:l])
-				}
+		case "truncate":
+			num, err := strconv.ParseInt(args[1], 10, 32)
+			if err == nil && utf8.RuneCountInString(input) >= int(num) {
+				r := []rune(input)
+				input = string(r[:num])
 			}
+		default:
 			if s, ok := sanitizers[split]; ok {
 				input = s(input)
 			}

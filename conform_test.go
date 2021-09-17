@@ -854,18 +854,17 @@ func (t *testSuite) TestTruncateUnicodeString() {
 	assert := assert.New(t.T())
 
 	type String string
+
+	type Name struct {
+		People string `conform:"truncate=5"`
+	}
+
 	type Post struct {
-		Name struct {
-			People string `conform:"truncate=5"`
-		}
+		Name        Name
 		HashTagsPtr *[]String `conform:"truncate=6"`
 	}
 	p := Post{
-		Name: struct {
-			People string `conform:"truncate=5"`
-		}{
-			People: "สวัสดีคนไทย",
-		},
+		Name:        Name{"สวัสดีคนไทย"},
 		HashTagsPtr: &[]String{String(" hashtag "), String("เราจะทำตามสัญญา")},
 	}
 
